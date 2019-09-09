@@ -23,9 +23,9 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    implementation libs.appcompatV7
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation libs.design
+    implementation libs.recyclerView
 }
 
 apply from: 'bintray.gradle'
