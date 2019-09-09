@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,28 @@
 package com.loopeer.itemtouchhelperextension;
 
 import android.graphics.Canvas;
-import androidx.core.view.ViewCompat;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.ItemTouchHelper;
-import androidx.recyclerview.widget.ItemTouchUIUtil;
+import android.os.Build;
 import android.view.View;
 
+import androidx.core.view.ViewCompat;
+import androidx.recyclerview.R;
+import androidx.recyclerview.widget.ItemTouchUIUtil;
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Package private class to keep implementations. Putting them inside ItemTouchUIUtil makes them
  * public API, which is not desired in this case.
+ *
+ * It's simply copy-pasted from 'androidx.recyclerview:recyclerview:1.1.0-beta04'
+ * https://developer.android.com/jetpack/androidx/releases/recyclerview#1.1.0-beta04
  */
-class ItemTouchUIUtilImpl {
-    static class Lollipop extends Honeycomb {
-        @Override
-        public void onDraw(Canvas c, RecyclerView recyclerView, View view,
-                           float dX, float dY, int actionState, boolean isCurrentlyActive) {
+class ItemTouchUIUtilImpl implements ItemTouchUIUtil {
+    static final ItemTouchUIUtil INSTANCE =  new ItemTouchUIUtilImpl();
+
+    @Override
+    public void onDraw(Canvas c, RecyclerView recyclerView, View view, float dX, float dY,
+            int actionState, boolean isCurrentlyActive) {
+        if (Build.VERSION.SDK_INT >= 21) {
             if (isCurrentlyActive) {
                 Object originalElevation = view.getTag(R.id.item_touch_helper_previous_elevation);
                 if (originalElevation == null) {
@@ -42,98 +48,48 @@ class ItemTouchUIUtilImpl {
                     view.setTag(R.id.item_touch_helper_previous_elevation, originalElevation);
                 }
             }
-            super.onDraw(c, recyclerView, view, dX, dY, actionState, isCurrentlyActive);
         }
 
-        private float findMaxElevation(RecyclerView recyclerView, View itemView) {
-            final int childCount = recyclerView.getChildCount();
-            float max = 0;
-            for (int i = 0; i < childCount; i++) {
-                final View child = recyclerView.getChildAt(i);
-                if (child == itemView) {
-                    continue;
-                }
-                final float elevation = ViewCompat.getElevation(child);
-                if (elevation > max) {
-                    max = elevation;
-                }
+        view.setTranslationX(dX);
+        view.setTranslationY(dY);
+    }
+
+    private static float findMaxElevation(RecyclerView recyclerView, View itemView) {
+        final int childCount = recyclerView.getChildCount();
+        float max = 0;
+        for (int i = 0; i < childCount; i++) {
+            final View child = recyclerView.getChildAt(i);
+            if (child == itemView) {
+                continue;
             }
-            return max;
+            final float elevation = ViewCompat.getElevation(child);
+            if (elevation > max) {
+                max = elevation;
+            }
         }
+        return max;
+    }
 
-        @Override
-        public void clearView(View view) {
+    @Override
+    public void onDrawOver(Canvas c, RecyclerView recyclerView, View view, float dX, float dY,
+            int actionState, boolean isCurrentlyActive) {
+    }
+
+    @Override
+    public void clearView(View view) {
+        if (Build.VERSION.SDK_INT >= 21) {
             final Object tag = view.getTag(R.id.item_touch_helper_previous_elevation);
-            if (tag != null && tag instanceof Float) {
+            if (tag instanceof Float) {
                 ViewCompat.setElevation(view, (Float) tag);
             }
             view.setTag(R.id.item_touch_helper_previous_elevation, null);
-            super.clearView(view);
         }
+
+        view.setTranslationX(0f);
+        view.setTranslationY(0f);
     }
 
-    static class Honeycomb implements ItemTouchUIUtil {
-
-        @Override
-        public void clearView(View view) {
-            ViewCompat.setTranslationX(view, 0f);
-            ViewCompat.setTranslationY(view, 0f);
-        }
-
-        @Override
-        public void onSelected(View view) {
-
-        }
-
-        @Override
-        public void onDraw(Canvas c, RecyclerView recyclerView, View view,
-                           float dX, float dY, int actionState, boolean isCurrentlyActive) {
-            ViewCompat.setTranslationX(view, dX);
-            ViewCompat.setTranslationY(view, dY);
-        }
-
-        @Override
-        public void onDrawOver(Canvas c, RecyclerView recyclerView,
-                               View view, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-
-        }
-    }
-
-    static class Gingerbread implements ItemTouchUIUtil {
-
-        private void draw(Canvas c, RecyclerView parent, View view,
-                          float dX, float dY) {
-            c.save();
-            c.translate(dX, dY);
-            parent.drawChild(c, view, 0);
-            c.restore();
-        }
-
-        @Override
-        public void clearView(View view) {
-            view.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        public void onSelected(View view) {
-            view.setVisibility(View.INVISIBLE);
-        }
-
-        @Override
-        public void onDraw(Canvas c, RecyclerView recyclerView, View view,
-                           float dX, float dY, int actionState, boolean isCurrentlyActive) {
-            if (actionState != ItemTouchHelper.ACTION_STATE_DRAG) {
-                draw(c, recyclerView, view, dX, dY);
-            }
-        }
-
-        @Override
-        public void onDrawOver(Canvas c, RecyclerView recyclerView,
-                               View view, float dX, float dY,
-                               int actionState, boolean isCurrentlyActive) {
-            if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
-                draw(c, recyclerView, view, dX, dY);
-            }
-        }
+    @Override
+    public void onSelected(View view) {
     }
 }
