@@ -395,6 +395,8 @@ public class ItemTouchHelperExtension extends RecyclerView.ItemDecoration
                     select(null, ACTION_STATE_IDLE);
                     mActivePointerId = ACTIVE_POINTER_ID_NONE;
                     break;
+                case MotionEvent.ACTION_DOWN:
+                    break;
                 case MotionEvent.ACTION_POINTER_UP: {
                     mClick = false;
                     final int pointerIndex = event.getActionIndex();
